@@ -1,0 +1,77 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:1.0.1'
+    }
+}
+
+apply plugin: 'com.android.application'
+android {
+    buildToolsVersion '21.1.2'
+    compileSdkVersion 21
+    defaultConfig {
+        applicationId "com.capitalone.game.wear"
+        minSdkVersion 19
+        targetSdkVersion 21
+        versionCode 1
+        versionName "1.0"
+    }
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = ['src']
+            aidl.srcDirs = ['src']
+            renderscript.srcDirs = ['src']
+            res.srcDirs = ['res']
+            assets.srcDirs = ['assets']
+        }
+
+        instrumentTest.setRoot('tests')
+
+        applicationVariants.all { variant ->
+            variant.outputs.each { output ->
+                def outputFile = output.outputFile
+                if (outputFile != null && outputFile.name.endsWith('android-release.apk')) {
+                    def fileName = outputFile.name.replace('android-release.apk', "spaceinvaders.apk")
+                    output.outputFile = new File(outputFile.parent, fileName)
+                }
+            }
+        }
+    }
+    dependencies {
+        provided 'com.google.android.gms:play-services-fitness:6.5.87'
+        provided 'com.google.android.gms:play-services-wearable:6.5.87'
+        wearApp project(':wear')
+    }
+
+    task run(type: Exec) {
+        def path
+        def localProperties = project.file("../local.properties")
+        if (localProperties.exists()) {
+            Properties properties = new Properties()
+            localProperties.withInputStream { instr ->
+                properties.load(instr)
+            }
+            def sdkDir = properties.getProperty('sdk.dir')
+            if (sdkDir) {
+                path = sdkDir
+            } else {
+                path = "$System.env.ANDROID_HOME"
+            }
+        } else {
+            path = "$System.env.ANDROID_HOME"
+        }
+
+        def adb = path + "/platform-tools/adb"
+        commandLine "$adb", 'shell', 'am', 'start', '-n', 'com.badlogic.invaders.android/com.badlogic.invaders.android.AndroidLauncher'
+    }
+
+// needed to add JNI shared libraries to APK when compiling on CLI
+    tasks.withType(com.android.build.gradle.tasks.PackageApplication) { pkgTask ->
+        pkgTask.jniFolders = new HashSet<File>()
+        pkgTask.jniFolders.add(new File(projectDir, 'libs'))
+    }
+
+}

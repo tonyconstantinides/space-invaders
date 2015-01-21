@@ -1,0 +1,2 @@
+include ':wear'
+include 'desktop', 'android',  'html', 'core', ':wearable-1.1.0', ':play-services-6.5.87', ':play-services-all-wear-6.5.87',  ':support-v4-21.0.3'
